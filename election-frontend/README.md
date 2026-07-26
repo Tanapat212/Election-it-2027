@@ -70,7 +70,7 @@ npm run dev                 # รันที่ http://localhost:3001
 confirmation modal ก่อนกดปุ่มสำคัญ และ inline validation ตามมาตรฐาน UX ข้อ 2.1
 
 ## ทดสอบ flow แบบเต็มระบบ (แนะนำลำดับ)
-1. Login `/admin-login` (admin / ChangeMe123!) → ไปที่ `/control`
+1. Login `/admin-login` (admin / admin2026) → ไปที่ `/control`
 2. แท็บ "จัดการผู้มีสิทธิ์" → เพิ่มรายชื่อทดสอบ 2-3 คน (จด username/password ที่ระบบสร้างให้)
 3. เปิด `/register` (แท็บ/browser อื่น) → สมัครผู้สมัคร 2-3 คน
 4. กลับ `/control` แท็บ "จัดการผู้สมัคร" → กดอนุมัติ (ระบบจะกำหนดเบอร์อัตโนมัติ)
