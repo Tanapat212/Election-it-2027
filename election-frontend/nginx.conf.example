@@ -1,0 +1,55 @@
+# ตัวอย่าง Nginx config สำหรับระบบเลือกตั้ง
+# ใช้วิธีแยก subdomain: โดเมนหลัก = frontend, subdomain "api." = backend
+# (เลือกวิธีนี้เพราะโค้ด frontend เรียก backend ผ่าน URL เต็มๆ ที่ตั้งใน NEXT_PUBLIC_API_URL
+#  ไม่ใช่ path /api/ บนโดเมนเดียวกัน ดูได้ที่ lib/api.js และ lib/socket.js)
+#
+# ก่อนใช้:
+# 1. แก้ "yourdomain.com" เป็นโดเมนจริงทั้งไฟล์ (มี 2 จุด: โดเมนหลัก และ api.โดเมน)
+# 2. ตั้ง DNS ให้ทั้ง yourdomain.com และ api.yourdomain.com ชี้มาที่ IP ของ VPS นี้
+# 3. วางไฟล์นี้ที่ /etc/nginx/sites-available/election
+#      sudo ln -s /etc/nginx/sites-available/election /etc/nginx/sites-enabled/
+#      sudo nginx -t && sudo systemctl reload nginx
+# 4. ขอ SSL ฟรีทั้งสองโดเมนพร้อมกัน:
+#      sudo certbot --nginx -d yourdomain.com -d api.yourdomain.com
+#
+# สำคัญ: อย่าลืมตั้งใน backend/.env -> FRONTEND_URL=https://yourdomain.com (สำหรับ CORS)
+#        และใน .env.local -> NEXT_PUBLIC_API_URL=https://api.yourdomain.com
+#                              NEXT_PUBLIC_SOCKET_URL=https://api.yourdomain.com
+
+# ---------- Frontend (Next.js, port 3001) ----------
+server {
+    listen 80;
+    server_name yourdomain.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+
+# ---------- Backend API + Socket.io (Fastify, port 4000) ----------
+server {
+    listen 80;
+    server_name api.yourdomain.com;
+
+    client_max_body_size 10M;  # เผื่อรองรับอัปโหลดรูปผู้สมัคร
+
+    location / {
+        proxy_pass http://127.0.0.1:4000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
